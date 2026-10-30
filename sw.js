@@ -1,4 +1,4 @@
-const CACHE = 'cook-again-v7';
+const CACHE = 'ever-tastier-v8';
 const ASSETS = ['/evertastier/', '/evertastier/index.html'];
 
 self.addEventListener('install', e => {

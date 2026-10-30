@@ -1,6 +1,6 @@
 {
-  "name": "Cook Again",
-  "short_name": "Cook Again",
+  "name": "Ever Tastier",
+  "short_name": "Ever Tastier",
   "description": "Recipe iteration journal — cook, rate, improve",
   "start_url": "/evertastier/index.html",
   "scope": "/evertastier/",
