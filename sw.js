@@ -1,4 +1,4 @@
-const CACHE = 'ever-tastier-v8';
+const CACHE = 'ever-tastier-v9';
 const ASSETS = ['/evertastier/', '/evertastier/index.html'];
 
 self.addEventListener('install', e => {
