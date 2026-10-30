@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cook Again">
+<meta name="theme-color" content="#1a1208">
+<title>Cook Again</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0d09;--surface:#1a1710;--surface2:#242018;--surface3:#2e2a1f;
+  --border:rgba(255,220,120,0.12);--border2:rgba(255,220,120,0.22);
+  --gold:#e8b84b;--gold-dim:#a07c28;--gold-light:#f5d078;
+  --cream:#f0e8d0;--cream-dim:#a89870;
+  --text:#f0e8d0;--text-dim:#8a7d62;--text-muted:#5a5040;
+  --green:#4a7c59;--green-light:#7fba94;--green-bg:rgba(74,124,89,0.15);
+  --red:#8b3a3a;--red-light:#c97070;--red-bg:rgba(139,58,58,0.15);
+  --blue:#3a5f8b;--blue-light:#70a0c9;--blue-bg:rgba(58,95,139,0.15);
+  --radius:14px;--radius-sm:8px;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;overflow:hidden;}
+#app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);overflow:hidden;}
+.screen.active{transform:translateX(0);}
+.screen.prev{transform:translateX(-30%);}
+.header{padding:52px 20px 16px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.header-row{display:flex;align-items:center;justify-content:space-between;}
+.back-btn{background:none;border:none;color:var(--gold);cursor:pointer;padding:4px 8px 4px 0;font-family:var(--font-body);font-size:14px;}
+.edit-btn{background:none;border:none;color:var(--gold);cursor:pointer;padding:4px 0 4px 8px;font-family:var(--font-body);font-size:14px;}
+.screen-title{font-family:var(--font-display);font-size:20px;font-weight:400;color:var(--cream);flex:1;}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:100px;}
+.scroll::-webkit-scrollbar{display:none;}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0 24px;z-index:10;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-family:var(--font-body);font-size:11px;transition:color 0.15s;}
+.nav-item.active{color:var(--gold);}
+.nav-icon{font-size:20px;}
+.recipe-card{margin:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;position:relative;overflow:hidden;}
+.recipe-card:active{background:var(--surface2);}
+.recipe-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-dim);border-radius:3px 0 0 3px;}
+.recipe-card.mastered::before{background:var(--gold);}
+.recipe-card.new-card::before{background:var(--text-muted);}
+.card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.card-emoji{width:48px;height:48px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.card-title{font-family:var(--font-display);font-size:17px;font-weight:400;color:var(--cream);margin-bottom:4px;}
+.card-bottom{display:flex;align-items:center;justify-content:space-between;}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface3);color:var(--text-dim);margin:2px 2px 0 0;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;}
+.badge-gold{background:rgba(232,184,75,0.15);color:var(--gold);border:1px solid rgba(232,184,75,0.25);}
+.badge-green{background:var(--green-bg);color:var(--green-light);border:1px solid rgba(74,124,89,0.3);}
+.badge-gray{background:var(--surface3);color:var(--text-dim);border:1px solid var(--border);}
+.master-block{margin:0 16px 4px;background:var(--surface);border:1px solid rgba(232,184,75,0.3);border-radius:var(--radius);overflow:hidden;}
+.master-block-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(232,184,75,0.06);border-bottom:1px solid rgba(232,184,75,0.15);}
+.master-block-title{font-size:13px;font-weight:500;color:var(--gold);display:flex;align-items:center;gap:6px;}
+.master-block-version{font-size:11px;color:var(--gold-dim);}
+.master-block-body{padding:14px 16px;}
+.master-snapshot{font-size:13px;line-height:1.9;color:var(--text-dim);white-space:pre-wrap;}
+.master-stars{font-size:14px;margin-bottom:8px;}
+.pick-master-prompt{margin:14px 16px;padding:12px 16px;border:1px dashed rgba(232,184,75,0.2);border-radius:var(--radius);font-size:13px;color:var(--text-muted);text-align:center;}
+.arc-wrap{padding:16px 20px;border-bottom:1px solid var(--border);}
+.arc-label{font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+.arc-bars{display:flex;align-items:flex-end;gap:5px;height:56px;}
+.arc-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.arc-bar{width:100%;border-radius:3px 3px 0 0;min-height:4px;}
+.arc-v{font-size:9px;color:var(--text-muted);}
+.iter-row{display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;}
+.iter-row:active{background:var(--surface);}
+.iter-row:last-child{border-bottom:none;}
+.iter-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.iter-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.iter-connector{width:1px;flex:1;background:var(--border);margin-top:4px;}
+.iter-row:last-child .iter-connector{display:none;}
+.iter-content{flex:1;padding-bottom:4px;}
+.iter-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2px;gap:8px;}
+.iter-version{font-size:14px;font-weight:500;color:var(--cream);}
+.iter-date{font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+.change-chips{margin-bottom:6px;}
+.chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:20px;margin:2px 2px 2px 0;}
+.chip-add{background:var(--green-bg);color:var(--green-light);}
+.chip-remove{background:var(--red-bg);color:var(--red-light);}
+.chip-tweak{background:var(--blue-bg);color:var(--blue-light);}
+.iter-note{font-size:13px;color:var(--text-dim);line-height:1.5;}
+.stats-row{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.stat-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;}
+.stat-label{font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+.stat-val{font-size:20px;font-weight:500;color:var(--cream);}
+.stat-val.gold{color:var(--gold);}
+.form-section{padding:16px 20px;border-bottom:1px solid var(--border);}
+.form-label{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:11px 14px;font-size:15px;font-family:var(--font-body);color:var(--text);outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
+.form-input:focus{border-color:var(--gold-dim);}
+.form-input::placeholder{color:var(--text-muted);}
+textarea.form-input{resize:none;min-height:90px;line-height:1.6;}
+input[type="date"].form-input{color-scheme:dark;}
+.emoji-picker{display:flex;flex-wrap:wrap;gap:8px;}
+.emoji-opt{width:44px;height:44px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:border-color 0.15s,background 0.15s;}
+.emoji-opt.selected{border-color:var(--gold);background:rgba(232,184,75,0.1);}
+.star-rater{display:flex;gap:10px;}
+.star-btn{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:background 0.12s,border-color 0.12s;color:var(--text-muted);}
+.star-btn.active{background:rgba(232,184,75,0.15);border-color:var(--gold-dim);color:var(--gold);}
+.change-list{margin-bottom:10px;min-height:10px;}
+.change-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.change-item-chip{flex:1;}
+.change-remove{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:0 4px;}
+.change-add-row{display:flex;gap:8px;margin-bottom:8px;}
+.change-type-btn{flex:1;padding:7px 6px;border-radius:var(--radius-sm);border:1px solid;font-size:12px;font-family:var(--font-body);cursor:pointer;font-weight:500;text-align:center;}
+.change-type-btn.add-btn{background:var(--green-bg);border-color:rgba(74,124,89,0.4);color:var(--green-light);}
+.change-type-btn.remove-btn{background:var(--red-bg);border-color:rgba(139,58,58,0.4);color:var(--red-light);}
+.change-type-btn.tweak-btn{background:var(--blue-bg);border-color:rgba(58,95,139,0.4);color:var(--blue-light);}
+.change-input-row{display:flex;gap:8px;}
+.change-input-row .form-input{flex:1;}
+.confirm-btn{padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--gold-dim);background:rgba(232,184,75,0.1);color:var(--gold);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.photo-thumb{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;background:var(--surface2);border:1px solid var(--border);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .del-photo{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.7);border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.photo-add{aspect-ratio:1;border-radius:var(--radius-sm);border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;color:var(--text-dim);font-size:12px;background:var(--surface);}
+.photo-add-icon{font-size:24px;}
+.btn-primary{width:100%;padding:14px;border-radius:var(--radius);background:var(--gold);color:var(--bg);font-family:var(--font-body);font-size:15px;font-weight:500;border:none;cursor:pointer;transition:opacity 0.15s;}
+.btn-primary:active{opacity:0.85;}
+.btn-danger{width:100%;padding:14px;border-radius:var(--radius);background:transparent;color:var(--red-light);font-family:var(--font-body);font-size:15px;font-weight:500;border:1px solid rgba(139,58,58,0.4);cursor:pointer;margin-top:10px;}
+.fab{position:absolute;bottom:88px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;color:var(--bg);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,184,75,0.35);z-index:20;transition:transform 0.15s;}
+.fab:active{transform:scale(0.94);}
+.recipe-snapshot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:13px;line-height:1.9;color:var(--text-dim);white-space:pre-wrap;}
+.home-header{padding:52px 20px 0;flex-shrink:0;}
+.home-title{font-family:var(--font-display);font-size:32px;font-weight:400;color:var(--gold-light);}
+.home-title em{font-style:italic;}
+.home-subtitle{font-size:13px;color:var(--text-dim);margin-top:4px;margin-bottom:16px;}
+.filter-row{display:flex;gap:8px;padding:12px 20px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);}
+.filter-row::-webkit-scrollbar{display:none;}
+.backup-nudge{display:flex;align-items:center;gap:10px;margin:0 16px 12px;padding:10px 8px 10px 14px;background:rgba(232,184,75,0.06);border:1px solid rgba(232,184,75,0.25);border-radius:var(--radius);flex-shrink:0;}
+.backup-nudge-text{flex:1;font-size:13px;color:var(--cream-dim);line-height:1.4;}
+.backup-nudge-btn{background:var(--gold);color:var(--bg);border:none;border-radius:var(--radius-sm);padding:9px 14px;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0;}
+.backup-nudge-close{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:6px 8px;flex-shrink:0;}
+.filter-chip{flex-shrink:0;font-size:12px;padding:5px 14px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:var(--font-body);transition:all 0.12s;}
+.filter-chip.active{background:rgba(232,184,75,0.12);border-color:var(--gold-dim);color:var(--gold);}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;text-align:center;gap:12px;}
+.empty-icon{font-size:48px;}
+.empty-title{font-family:var(--font-display);font-size:20px;color:var(--cream);}
+.empty-text{font-size:14px;color:var(--text-dim);line-height:1.6;}
+.section-header{padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);}
+.photo-scroll{display:flex;gap:10px;overflow-x:auto;padding:0 20px;}
+.photo-scroll::-webkit-scrollbar{display:none;}
+.photo-scroll-item{flex-shrink:0;width:180px;height:180px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.photo-scroll-item img{width:100%;height:100%;object-fit:cover;}
+.next-time-box{background:rgba(232,184,75,0.05);border:1px solid rgba(232,184,75,0.15);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--cream-dim);line-height:1.6;font-style:italic;}
+.next-time-label{font-size:11px;color:var(--gold-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-style:normal;}
+.master-btn{display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:var(--radius);border:1px solid rgba(232,184,75,0.3);background:rgba(232,184,75,0.06);color:var(--gold);font-family:var(--font-body);font-size:14px;cursor:pointer;width:100%;justify-content:center;}
+#toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--border2);border-radius:20px;padding:8px 18px;font-size:13px;color:var(--cream);opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;z-index:100;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* ── AUDIO RECORDING ── */
+.audio-record-btn{display:flex;align-items:center;gap:10px;width:100%;padding:13px 16px;border-radius:var(--radius);border:1px solid rgba(200,80,80,0.35);background:rgba(139,58,58,0.12);color:var(--red-light);font-family:var(--font-body);font-size:14px;cursor:pointer;transition:all 0.15s;justify-content:center;}
+.audio-record-btn:active{opacity:0.8;}
+.audio-record-btn.recording{background:rgba(139,58,58,0.25);border-color:rgba(200,80,80,0.6);color:#e87070;}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red-light);flex-shrink:0;}
+.rec-dot.pulse{animation:recPulse 1s ease-in-out infinite;}
+@keyframes recPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+.rec-timer{font-variant-numeric:tabular-nums;font-size:13px;color:var(--red-light);min-width:38px;}
+.audio-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.audio-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;}
+.audio-play-btn{width:34px;height:34px;border-radius:50%;background:rgba(232,184,75,0.1);border:1px solid var(--gold-dim);color:var(--gold);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.12s;}
+.audio-play-btn:active{background:rgba(232,184,75,0.25);}
+.audio-play-btn.playing{background:rgba(232,184,75,0.2);}
+.audio-waveform{flex:1;height:28px;display:flex;align-items:center;gap:2px;overflow:hidden;}
+.audio-waveform-bar{width:3px;border-radius:2px;background:var(--text-muted);flex-shrink:0;transition:background 0.1s;}
+.audio-waveform-bar.active{background:var(--gold-dim);}
+.audio-meta{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+.audio-del-btn{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:0 2px;flex-shrink:0;}
+.audio-progress{font-size:11px;color:var(--gold-dim);min-width:32px;text-align:right;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="home-header">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;">
+      <div class="home-title">Cook <em>Again</em></div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;">v7</div>
+    </div>
+    <div class="home-subtitle" id="home-subtitle">Loading...</div>
+  </div>
+  <div class="backup-nudge" id="backup-nudge" style="display:none;">
+    <div class="backup-nudge-text" id="backup-nudge-text"></div>
+    <button class="backup-nudge-btn" onclick="exportBackup()">Back up</button>
+    <button class="backup-nudge-close" onclick="snoozeBackupNudge()" aria-label="Later">×</button>
+  </div>
+  <div class="filter-row" id="filter-row">
+    <button class="filter-chip active" data-tag="all" onclick="filterRecipes(this)">all</button>
+  </div>
+  <div class="scroll"><div id="recipe-list"></div></div>
+  <button class="fab" onclick="showScreen('screen-new-recipe')">+</button>
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🍳</span><span>recipes</span></button>
+    <button class="nav-item" onclick="showTab('journal')"><span class="nav-icon">📓</span><span>journal</span></button>
+    <button class="nav-item" onclick="exportBackup()"><span class="nav-icon">💾</span><span>backup</span></button>
+  </nav>
+</div>
+
+<!-- JOURNAL -->
+<div class="screen" id="screen-journal">
+  <div class="home-header">
+    <div class="home-title">Cook <em>Journal</em></div>
+    <div class="home-subtitle">all your iterations, chronologically</div>
+  </div>
+  <div class="scroll"><div id="journal-list" style="padding-top:12px;"></div></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="showTab('home')"><span class="nav-icon">🍳</span><span>recipes</span></button>
+    <button class="nav-item active" onclick="showTab('journal')"><span class="nav-icon">📓</span><span>journal</span></button>
+    <button class="nav-item" onclick="exportBackup()"><span class="nav-icon">💾</span><span>backup</span></button>
+  </nav>
+</div>
+
+<!-- RECIPE DETAIL -->
+<div class="screen" id="screen-recipe">
+  <div class="header">
+    <div class="header-row">
+      <button class="back-btn" onclick="goBack()">‹ back</button>
+      <div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:12px;">
+        <div id="recipe-detail-badge"></div>
+        <button class="edit-btn" onclick="showEditRecipe()">edit</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+      <div id="recipe-detail-emoji" style="font-size:32px;"></div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--cream);" id="recipe-detail-title"></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px;" id="recipe-detail-tags"></div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="stats-row" id="recipe-stats"></div>
+    <div style="padding:14px 0 4px;" id="master-section"></div>
+    <div class="arc-wrap">
+      <div class="arc-label">rating over time</div>
+      <div class="arc-bars" id="rating-arc"></div>
+    </div>
+    <div class="section-header">
+      <span class="section-title">all versions</span>
+      <button onclick="showLogCook()" style="background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;font-family:var(--font-body);">+ log a cook</button>
+    </div>
+    <div class="iter-list" id="iter-list"></div>
+  </div>
+  <button class="fab" onclick="showLogCook()">+</button>
+</div>
+
+<!-- LOG / EDIT COOK -->
+<div class="screen" id="screen-log">
+  <div class="header">
+    <div class="header-row">
+      <button class="back-btn" onclick="goBack()">‹ cancel</button>
+      <div class="screen-title" id="log-screen-title">log a cook</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="form-section">
+      <div class="form-label">date</div>
+      <input type="date" class="form-input" id="log-date">
+    </div>
+    <div class="form-section">
+      <div class="form-label">photos</div>
+      <div class="photo-grid" id="log-photos">
+        <div class="photo-add" onclick="triggerPhotoAdd()">
+          <span class="photo-add-icon">📷</span><span>add photo</span>
+        </div>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoAdd(this)">
+    </div>
+    <div class="form-section">
+      <div class="form-label">voice memos</div>
+      <button class="audio-record-btn" id="record-btn" onclick="toggleRecording()">
+        <span class="rec-dot" id="rec-dot"></span>
+        <span id="rec-btn-label">hold to record a memo</span>
+        <span class="rec-timer" id="rec-timer" style="display:none;">0:00</span>
+      </button>
+      <div class="audio-list" id="audio-list"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label">what changed?</div>
+      <div class="change-list" id="change-list"></div>
+      <div class="change-add-row">
+        <button class="change-type-btn add-btn" onclick="setChangeType('add')">+ added</button>
+        <button class="change-type-btn remove-btn" onclick="setChangeType('remove')">− removed</button>
+        <button class="change-type-btn tweak-btn" onclick="setChangeType('tweak')">~ tweaked</button>
+      </div>
+      <div id="change-input-area" style="display:none;">
+        <div class="change-input-row">
+          <input class="form-input" id="change-text-input" placeholder="describe the change..." onkeydown="if(event.key==='Enter'){addChange();}">
+          <button class="confirm-btn" onclick="addChange()">add</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label">rate this batch <span id="rating-hint" style="color:var(--gold-dim);font-size:11px;text-transform:none;letter-spacing:0;">(tap a star)</span></div>
+      <div class="star-rater" id="star-rater">
+        <button class="star-btn" data-star="1" onclick="setRating(1)">★</button>
+        <button class="star-btn" data-star="2" onclick="setRating(2)">★</button>
+        <button class="star-btn" data-star="3" onclick="setRating(3)">★</button>
+        <button class="star-btn" data-star="4" onclick="setRating(4)">★</button>
+        <button class="star-btn" data-star="5" onclick="setRating(5)">★</button>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label">notes</div>
+      <textarea class="form-input" id="log-notes" placeholder="how did it turn out?"></textarea>
+    </div>
+    <div class="form-section">
+      <div class="form-label">try next time</div>
+      <input class="form-input" id="log-next-time" placeholder="ideas for the next cook...">
+    </div>
+    <div class="form-section">
+      <div class="form-label">full recipe as cooked</div>
+      <textarea class="form-input" id="log-snapshot" placeholder="complete recipe for this version..." style="min-height:120px;"></textarea>
+    </div>
+    <div style="padding:16px 20px 32px;">
+      <button class="btn-primary" id="log-save-btn" onclick="saveLog()">save cook log</button>
+      <button class="btn-danger" id="log-delete-btn" onclick="deleteIter()" style="display:none;">delete this cook</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITERATION DETAIL -->
+<div class="screen" id="screen-iter">
+  <div class="header">
+    <div class="header-row">
+      <button class="back-btn" onclick="goBack()">‹ back</button>
+      <div class="screen-title" id="iter-detail-title"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="iter-best-badge"></div>
+        <button class="edit-btn" onclick="showEditIter()">edit</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="padding:16px 20px 0;" id="iter-best-banner"></div>
+    <div style="padding:0 20px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);">
+      <div id="iter-detail-stars" style="font-size:22px;"></div>
+      <span style="font-size:13px;color:var(--text-dim);" id="iter-detail-rating-text"></span>
+      <span style="font-size:13px;color:var(--text-dim);margin-left:auto;" id="iter-detail-date"></span>
+    </div>
+    <div id="iter-photos-section" style="padding:14px 0;border-bottom:1px solid var(--border);">
+      <div class="photo-scroll" id="iter-photos"></div>
+    </div>
+    <div id="iter-audio-section" style="padding:14px 20px;border-bottom:1px solid var(--border);display:none;">
+      <div class="form-label" style="margin-bottom:10px;">voice memos</div>
+      <div class="audio-list" id="iter-audio-list"></div>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);" id="iter-changes-section">
+      <div class="form-label" style="margin-bottom:8px;">changes this cook</div>
+      <div id="iter-detail-changes"></div>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);" id="iter-notes-section">
+      <div class="form-label" style="margin-bottom:6px;">notes</div>
+      <div style="font-size:14px;line-height:1.7;color:var(--text);" id="iter-detail-notes"></div>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);" id="iter-next-section">
+      <div class="next-time-box">
+        <div class="next-time-label">try next time</div>
+        <div id="iter-detail-next"></div>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div class="form-label" style="margin-bottom:8px;">full recipe snapshot</div>
+      <div class="recipe-snapshot" id="iter-detail-snapshot"></div>
+    </div>
+    <div style="padding:16px 20px 32px;" id="iter-master-btn-wrap"></div>
+  </div>
+</div>
+
+<!-- NEW RECIPE -->
+<div class="screen" id="screen-new-recipe">
+  <div class="header">
+    <div class="header-row">
+      <button class="back-btn" onclick="goBack()">‹ cancel</button>
+      <div class="screen-title">new recipe</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="form-section">
+      <div class="form-label">recipe name</div>
+      <input class="form-input" id="new-name" placeholder="e.g. smoked beef jerky, sourdough boule...">
+    </div>
+    <div class="form-section">
+      <div class="form-label">pick an emoji</div>
+      <div class="emoji-picker" id="new-emoji-picker"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label">tags (comma separated)</div>
+      <input class="form-input" id="new-tags" placeholder="beef, smoked, quick, baking...">
+    </div>
+    <div class="form-section">
+      <div class="form-label">v1 recipe — your starting point</div>
+      <textarea class="form-input" id="new-recipe-text" placeholder="ingredients and method..." style="min-height:140px;"></textarea>
+    </div>
+    <div class="form-section">
+      <div class="form-label">initial notes (optional)</div>
+      <textarea class="form-input" id="new-notes" placeholder="where did you find it? what do you want to improve?" style="min-height:70px;"></textarea>
+    </div>
+    <div style="padding:16px 20px 32px;">
+      <button class="btn-primary" onclick="saveNewRecipe()">create recipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT RECIPE -->
+<div class="screen" id="screen-edit-recipe">
+  <div class="header">
+    <div class="header-row">
+      <button class="back-btn" onclick="goBack()">‹ cancel</button>
+      <div class="screen-title">edit recipe</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="form-section">
+      <div class="form-label">recipe name</div>
+      <input class="form-input" id="edit-recipe-name" placeholder="recipe name">
+    </div>
+    <div class="form-section">
+      <div class="form-label">emoji</div>
+      <div class="emoji-picker" id="edit-emoji-picker"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label">tags (comma separated)</div>
+      <input class="form-input" id="edit-recipe-tags" placeholder="beef, smoked, quick...">
+    </div>
+    <div class="form-section">
+      <div class="form-label">v1 recipe</div>
+      <textarea class="form-input" id="edit-recipe-base" placeholder="your base recipe..." style="min-height:140px;"></textarea>
+    </div>
+    <div class="form-section">
+      <div class="form-label">notes</div>
+      <textarea class="form-input" id="edit-recipe-notes" placeholder="notes..." style="min-height:70px;"></textarea>
+    </div>
+    <div style="padding:16px 20px 32px;">
+      <button class="btn-primary" onclick="saveEditRecipe()">save changes</button>
+      <button class="btn-danger" onclick="deleteRecipe()">delete recipe</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const EMOJIS=['🍖','🥩','🍞','🍕','🍔','🌮','🍜','🍰','🫙','🥘','🍗','🥚','🫕','🥓','🐟','🦃'];
+
+let db=loadDB(),currentRecipeId=null,currentIterId=null;
+let logPhotos=[],logChanges=[],logRating=0,currentChangeType=null;
+let selectedEmoji='🍖',editSelectedEmoji='🍖';
+let isEditingIter=false;
+let screenStack=['screen-home'];
+
+function loadDB(){try{return JSON.parse(localStorage.getItem('cookagain-db')||'{"recipes":[]}');}catch(e){return{recipes:[]};}}
+function saveDB(){localStorage.setItem('cookagain-db',JSON.stringify(db));}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function todayValue(){return new Date().toISOString().slice(0,10);}
+
+// ── BACKUP ────────────────────────────────────────────────────────────────
+// Saves every recipe, cook, photo and voice memo to one .json file. The API key is left out.
+async function exportBackup(){
+  const backup={app:'cookagain',backupVersion:1,exportedAt:new Date().toISOString(),data:db};
+  const name=`ever-tastier-backup-${todayValue()}.json`;
+  const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+  const file=new File([blob],name,{type:'application/json'});
+  // iPhone: open the share sheet so it can go to Files, AirDrop or email
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:name});markBackedUp();showToast('Backup saved');return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  markBackedUp();showToast('Backup downloaded');
+}
+
+// Reminder on the home screen: shows after 3 new recipes/cooks, or a week with any new ones
+let backupNudgeSnoozed=false;
+function backupItemCount(){return db.recipes.reduce((a,r)=>a+1+r.iterations.length,0);}
+function markBackedUp(){
+  localStorage.setItem('cookagain-last-backup',JSON.stringify({at:Date.now(),count:backupItemCount()}));
+  renderBackupNudge();
+}
+function snoozeBackupNudge(){backupNudgeSnoozed=true;renderBackupNudge();}
+function renderBackupNudge(){
+  const el=document.getElementById('backup-nudge');
+  let last=null;try{last=JSON.parse(localStorage.getItem('cookagain-last-backup'));}catch(e){}
+  const count=backupItemCount(),added=last?count-last.count:count;
+  const days=last?(Date.now()-last.at)/864e5:0;
+  const show=!backupNudgeSnoozed&&count>0&&(!last||added>=3||(days>=7&&added>0));
+  el.style.display=show?'flex':'none';
+  if(!show)return;
+  document.getElementById('backup-nudge-text').textContent=!last
+    ?'Your recipes aren\'t backed up yet.'
+    :added>=3?`${added} new since your last backup.`:`Last backup was ${Math.floor(days)} days ago.`;
+}
+
+// ── EMOJI PICKERS ─────────────────────────────────────────────────────────
+function buildEmojiPicker(containerId, currentEmoji, onSelect) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt${e===currentEmoji?' selected':''}" data-emoji="${e}" onclick="(${onSelect.toString()})(this)">${e}</div>`
+  ).join('');
+}
+function selectNewEmoji(el){document.querySelectorAll('#new-emoji-picker .emoji-opt').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');selectedEmoji=el.dataset.emoji;}
+function selectEditEmoji(el){document.querySelectorAll('#edit-emoji-picker .emoji-opt').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');editSelectedEmoji=el.dataset.emoji;}
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function showScreen(id,addToStack=true){
+  const cur=screenStack[screenStack.length-1];if(cur===id)return;
+  document.getElementById(cur)?.classList.add('prev');
+  setTimeout(()=>document.getElementById(cur)?.classList.remove('prev'),350);
+  document.getElementById(cur)?.classList.remove('active');
+  document.getElementById(id)?.classList.add('active');
+  if(addToStack)screenStack.push(id);
+}
+function goBack(){
+  if(screenStack.length<=1)return;
+  const cur=screenStack.pop(),prev=screenStack[screenStack.length-1];
+  document.getElementById(cur)?.classList.remove('active');
+  document.getElementById(prev)?.classList.remove('prev');
+  document.getElementById(prev)?.classList.add('active');
+}
+function showTab(tab){
+  screenStack=[tab==='home'?'screen-home':'screen-journal'];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','prev'));
+  document.getElementById(screenStack[0]).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.textContent.trim().includes(tab==='home'?'recipes':'journal')));
+  if(tab==='journal')renderJournal();else renderHome();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────────────
+function renderHome(){
+  const recipes=db.recipes,total=recipes.reduce((a,r)=>a+r.iterations.length,0);
+  document.getElementById('home-subtitle').textContent=recipes.length===0?'Start your first recipe below':`${recipes.length} recipe${recipes.length!==1?'s':''} · ${total} cook${total!==1?'s':''}`;
+  const allTags=new Set();recipes.forEach(r=>r.tags.forEach(t=>allTags.add(t)));
+  const fr=document.getElementById('filter-row');
+  const af=fr.querySelector('.filter-chip.active')?.dataset.tag||'all';
+  fr.innerHTML=`<button class="filter-chip${af==='all'?' active':''}" data-tag="all" onclick="filterRecipes(this)">all</button>`;
+  allTags.forEach(t=>{const b=document.createElement('button');b.className='filter-chip'+(af===t?' active':'');b.dataset.tag=t;b.textContent=t;b.onclick=function(){filterRecipes(this);};fr.appendChild(b);});
+  renderRecipeList(af==='all'?recipes:recipes.filter(r=>r.tags.includes(af)));
+  renderBackupNudge();
+}
+function filterRecipes(btn){
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const tag=btn.dataset.tag;renderRecipeList(tag==='all'?db.recipes:db.recipes.filter(r=>r.tags.includes(tag)));
+}
+function renderRecipeList(recipes){
+  const el=document.getElementById('recipe-list');
+  if(!recipes.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🍳</div><div class="empty-title">no recipes yet</div><div class="empty-text">Tap the + button to add your first recipe.</div></div>`;return;}
+  el.innerHTML=recipes.map(r=>recipeCardHTML(r)).join('');
+}
+function recipeCardHTML(r){
+  const iters=r.iterations;
+  const masterIter=r.masterIterId?iters.find(i=>i.id===r.masterIterId):null;
+  const bestRating=masterIter?masterIter.rating:(iters.length?Math.max(...iters.map(i=>i.rating)):0);
+  const lastDate=iters.length?formatRelDate(iters[iters.length-1].date):'no cooks yet';
+  const hasMaster=!!r.masterIterId&&iters.length>1;
+  const statusClass=hasMaster?'mastered':(iters.length===0?'new-card':'');
+  const badge=hasMaster?'<span class="badge badge-gold">✦ mastered</span>':iters.length===0?'<span class="badge badge-gray">new</span>':'<span class="badge badge-green">in progress</span>';
+  return `<div class="recipe-card ${statusClass}" onclick="openRecipe('${r.id}')">
+    <div class="card-top">
+      <div class="card-emoji">${r.emoji}</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="card-title">${r.name}</span>${badge}</div>
+        <div>${r.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="card-bottom">
+      <span style="font-size:12px;color:var(--text-dim);">${iters.length} cook${iters.length!==1?'s':''} · ${lastDate}</span>
+      <span>${starsHTML(bestRating)}</span>
+    </div>
+  </div>`;
+}
+function starsHTML(r){let s='';for(let i=1;i<=5;i++)s+=`<span style="color:${i<=r?'var(--gold)':'var(--text-muted)'};font-size:13px;">★</span>`;return s;}
+
+// ── RECIPE DETAIL ─────────────────────────────────────────────────────────
+function openRecipe(id){
+  currentRecipeId=id;const r=db.recipes.find(x=>x.id===id);if(!r)return;
+  document.getElementById('recipe-detail-title').textContent=r.name;
+  document.getElementById('recipe-detail-emoji').textContent=r.emoji;
+  document.getElementById('recipe-detail-tags').textContent=r.tags.join(' · ');
+  const hasMaster=!!r.masterIterId&&r.iterations.length>1;
+  document.getElementById('recipe-detail-badge').innerHTML=hasMaster?'<span class="badge badge-gold">✦ mastered</span>':'';
+  const iters=r.iterations;
+  const bestRating=iters.length?Math.max(...iters.map(i=>i.rating)):0;
+  const avgRating=iters.length?(iters.reduce((a,i)=>a+i.rating,0)/iters.length):0;
+  document.getElementById('recipe-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">versions</div><div class="stat-val">${iters.length}</div></div>
+    <div class="stat-card"><div class="stat-label">best rating</div><div class="stat-val gold">★ ${bestRating>0?bestRating+'.0':'—'}</div></div>
+    <div class="stat-card"><div class="stat-label">avg rating</div><div class="stat-val">${iters.length?avgRating.toFixed(1):'—'}</div></div>`;
+  renderMasterSection(r);
+  const arcEl=document.getElementById('rating-arc');
+  if(!iters.length){arcEl.innerHTML='<span style="font-size:13px;color:var(--text-muted);">no cooks yet</span>';}
+  else{
+    const colors=['#4a7c5920','#4a7c5940','#4a7c5970','#4a7c59','#1D9E75','#0F6E56','#085041'];
+    arcEl.innerHTML=iters.map((iter,idx)=>{
+      const h=Math.round((iter.rating/5)*52),ci=Math.min(Math.floor((iter.rating/5)*colors.length),colors.length-1),isBest=iter.rating===bestRating&&bestRating>0;
+      return `<div class="arc-bar-wrap">${isBest?`<div style="font-size:9px;color:var(--gold);margin-bottom:2px;">★${iter.rating}</div>`:'<div style="height:13px;"></div>'}<div class="arc-bar" style="height:${h}px;background:${colors[ci]};"></div><div class="arc-v">v${idx+1}</div></div>`;
+    }).join('');
+  }
+  renderIterList(r);showScreen('screen-recipe');
+}
+
+function renderMasterSection(r){
+  const el=document.getElementById('master-section'),iters=r.iterations;
+  if(!iters.length){
+    el.innerHTML=r.baseRecipe?`<div class="master-block"><div class="master-block-header"><div class="master-block-title">✦ v1 — starting point</div><span class="master-block-version">your base</span></div><div class="master-block-body"><div class="master-snapshot">${r.baseRecipe}</div></div></div>`:'';
+    return;
+  }
+  if(iters.length===1&&!r.masterIterId){r.masterIterId=iters[0].id;saveDB();}
+  const masterIter=r.masterIterId?iters.find(i=>i.id===r.masterIterId):null;
+  const masterIdx=masterIter?iters.indexOf(masterIter):-1;
+  if(masterIter){
+    el.innerHTML=`<div class="master-block"><div class="master-block-header"><div class="master-block-title">✦ master recipe</div><span class="master-block-version">v${masterIdx+1} · ${formatDate(masterIter.date)}</span></div><div class="master-block-body"><div class="master-stars">${starsHTML(masterIter.rating)}</div><div class="master-snapshot">${masterIter.snapshot||'(no recipe snapshot recorded)'}</div></div></div>`;
+  } else {
+    el.innerHTML=`<div class="pick-master-prompt">tap any version below and mark it as your master recipe</div>`;
+  }
+}
+
+function renderIterList(r){
+  const iters=r.iterations,el=document.getElementById('iter-list');
+  if(!iters.length){el.innerHTML=`<div class="empty-state" style="padding:30px 40px;"><div class="empty-icon">📝</div><div class="empty-title">no cooks logged yet</div><div class="empty-text">Tap + to log your first cook.</div></div>`;return;}
+  el.innerHTML=[...iters].reverse().map((iter,ridx)=>{
+    const idx=iters.length-1-ridx,isMaster=r.masterIterId===iter.id;
+    const dotColor=isMaster?'var(--gold)':iter.rating>=4?'var(--green)':'var(--text-muted)';
+    const chips=iter.changes.map(c=>chipHTML(c)).join('');
+    return `<div class="iter-row" onclick="openIter('${r.id}','${iter.id}')">
+      <div class="iter-line"><div class="iter-dot" style="background:${dotColor};${isMaster?'box-shadow:0 0 6px var(--gold-dim);':''}"></div><div class="iter-connector"></div></div>
+      <div class="iter-content">
+        <div class="iter-header"><span class="iter-version">v${idx+1}${isMaster?' <span style="color:var(--gold);font-size:12px;">✦</span>':''}</span><span>${starsHTML(iter.rating)}</span></div>
+        <div class="iter-date">${formatDate(iter.date)}</div>
+        ${chips?`<div class="change-chips">${chips}</div>`:''}
+        ${iter.notes?`<div class="iter-note">${iter.notes.substring(0,100)}${iter.notes.length>100?'…':''}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function chipHTML(c){const cls=c.type==='add'?'chip-add':c.type==='remove'?'chip-remove':'chip-tweak',sym=c.type==='add'?'+':c.type==='remove'?'−':'~';return `<span class="chip ${cls}">${sym} ${c.text}</span>`;}
+
+// ── EDIT RECIPE ───────────────────────────────────────────────────────────
+function showEditRecipe(){
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return;
+  document.getElementById('edit-recipe-name').value=r.name;
+  document.getElementById('edit-recipe-tags').value=r.tags.join(', ');
+  document.getElementById('edit-recipe-base').value=r.baseRecipe||'';
+  document.getElementById('edit-recipe-notes').value=r.notes||'';
+  editSelectedEmoji=r.emoji;
+  buildEmojiPicker('edit-emoji-picker', r.emoji, selectEditEmoji);
+  showScreen('screen-edit-recipe');
+}
+function saveEditRecipe(){
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return;
+  const name=document.getElementById('edit-recipe-name').value.trim();
+  if(!name){showToast('please enter a recipe name');return;}
+  r.name=name;
+  r.emoji=editSelectedEmoji;
+  r.tags=document.getElementById('edit-recipe-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  r.baseRecipe=document.getElementById('edit-recipe-base').value.trim();
+  r.notes=document.getElementById('edit-recipe-notes').value.trim();
+  saveDB();showToast('recipe updated ✓');goBack();
+  // refresh recipe detail
+  document.getElementById('recipe-detail-title').textContent=r.name;
+  document.getElementById('recipe-detail-emoji').textContent=r.emoji;
+  document.getElementById('recipe-detail-tags').textContent=r.tags.join(' · ');
+  renderMasterSection(r);renderHome();
+}
+function deleteRecipe(){
+  if(!confirm('Delete this recipe and all its cooks? This cannot be undone.'))return;
+  db.recipes=db.recipes.filter(x=>x.id!==currentRecipeId);
+  saveDB();showToast('recipe deleted');
+  // pop back to home
+  screenStack=['screen-home'];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','prev'));
+  document.getElementById('screen-home').classList.add('active');
+  renderHome();
+}
+
+// ── LOG COOK ──────────────────────────────────────────────────────────────
+function showLogCook(){
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return;
+  isEditingIter=false; currentIterId=null;
+  logPhotos=[];logChanges=[];logRating=0;currentChangeType=null;
+  const vNum=r.iterations.length+1;
+  document.getElementById('log-screen-title').textContent=`v${vNum} — log a cook`;
+  document.getElementById('log-date').value=todayValue();
+  const lastSnap=r.iterations.length>0?r.iterations[r.iterations.length-1].snapshot:r.baseRecipe;
+  document.getElementById('log-snapshot').value=lastSnap||'';
+  const lastNext=r.iterations.length>0?r.iterations[r.iterations.length-1].nextTime:'';
+  document.getElementById('log-notes').value='';
+  document.getElementById('log-notes').placeholder=lastNext?`Last time: "${lastNext}" — how did it go?`:'how did it turn out?';
+  document.getElementById('log-next-time').value='';
+  document.getElementById('log-save-btn').textContent='save cook log';
+  document.getElementById('log-delete-btn').style.display='none';
+  renderLogPhotos();renderChangeList();updateStarUI();
+  const hint=document.getElementById('rating-hint');if(hint)hint.style.display='inline';
+  document.getElementById('change-input-area').style.display='none';
+  showScreen('screen-log');
+}
+
+function showEditIter(){
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return;
+  const iter=r.iterations.find(i=>i.id===currentIterId);if(!iter)return;
+  isEditingIter=true;
+  logPhotos=[...iter.photos||[]];
+  logChanges=[...iter.changes||[]];
+  logRating=iter.rating||0;
+  currentChangeType=null;
+  const iterIdx=r.iterations.indexOf(iter);
+  document.getElementById('log-screen-title').textContent=`edit v${iterIdx+1}`;
+  document.getElementById('log-date').value=iter.date?iter.date.slice(0,10):todayValue();
+  document.getElementById('log-snapshot').value=iter.snapshot||'';
+  document.getElementById('log-notes').value=iter.notes||'';
+  document.getElementById('log-notes').placeholder='how did it turn out?';
+  document.getElementById('log-next-time').value=iter.nextTime||'';
+  document.getElementById('log-save-btn').textContent='save changes';
+  document.getElementById('log-delete-btn').style.display='block';
+  renderLogPhotos();renderChangeList();updateStarUI();
+  const hint=document.getElementById('rating-hint');if(hint)hint.style.display='none';
+  document.getElementById('change-input-area').style.display='none';
+  showScreen('screen-log');
+}
+
+function triggerPhotoAdd(){document.getElementById('photo-input').click();}
+function handlePhotoAdd(input){
+  Array.from(input.files).forEach(file=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const maxDim=800;let w=img.width,h=img.height;
+      if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}else if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+      canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);
+      logPhotos.push(canvas.toDataURL('image/jpeg',0.7));URL.revokeObjectURL(url);renderLogPhotos();
+    };img.src=url;
+  });input.value='';
+}
+function renderLogPhotos(){
+  document.getElementById('log-photos').innerHTML=
+    logPhotos.map((src,i)=>`<div class="photo-thumb"><img src="${src}"><button class="del-photo" onclick="removePhoto(${i})">×</button></div>`).join('')+
+    `<div class="photo-add" onclick="triggerPhotoAdd()"><span class="photo-add-icon">📷</span><span>add photo</span></div>`;
+}
+function removePhoto(i){logPhotos.splice(i,1);renderLogPhotos();}
+function setChangeType(type){
+  currentChangeType=type;
+  const area=document.getElementById('change-input-area');area.style.display='flex';area.style.flexDirection='column';area.style.gap='8px';
+  document.getElementById('change-text-input').placeholder=type==='add'?'what did you add?':type==='remove'?'what did you remove?':'what did you tweak?';
+  document.getElementById('change-text-input').value='';document.getElementById('change-text-input').focus();
+}
+function addChange(){
+  const text=document.getElementById('change-text-input').value.trim();if(!text||!currentChangeType)return;
+  logChanges.push({type:currentChangeType,text});
+  document.getElementById('change-text-input').value='';document.getElementById('change-input-area').style.display='none';currentChangeType=null;renderChangeList();
+}
+function renderChangeList(){
+  document.getElementById('change-list').innerHTML=logChanges.map((c,i)=>
+    `<div class="change-item"><span class="chip change-item-chip ${c.type==='add'?'chip-add':c.type==='remove'?'chip-remove':'chip-tweak'}">${c.type==='add'?'+':c.type==='remove'?'−':'~'} ${c.text}</span><button class="change-remove" onclick="removeChange(${i})">×</button></div>`
+  ).join('');
+}
+function removeChange(i){logChanges.splice(i,1);renderChangeList();}
+function setRating(n){logRating=n;updateStarUI();const h=document.getElementById('rating-hint');if(h)h.style.display='none';}
+function updateStarUI(){document.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.star)<=logRating));}
+
+function saveLog(){
+  if(!currentRecipeId){showToast('error: no recipe selected');return;}
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r){showToast('error: recipe not found');return;}
+  const dateVal=document.getElementById('log-date').value;
+  const iterData={
+    date:dateVal?new Date(dateVal+'T12:00:00').toISOString():new Date().toISOString(),
+    photos:[...logPhotos],changes:[...logChanges],rating:logRating,
+    notes:document.getElementById('log-notes').value.trim(),
+    nextTime:document.getElementById('log-next-time').value.trim(),
+    snapshot:document.getElementById('log-snapshot').value.trim()
+  };
+  if(isEditingIter){
+    // update existing
+    const idx=r.iterations.findIndex(i=>i.id===currentIterId);
+    if(idx===-1){showToast('error: cook not found');return;}
+    r.iterations[idx]={...r.iterations[idx],...iterData};
+    try{saveDB();showToast('cook updated ✓');goBack();setTimeout(()=>openIter(currentRecipeId,currentIterId),350);}
+    catch(e){r.iterations[idx].photos=[];try{saveDB();showToast('saved (photos skipped)');goBack();setTimeout(()=>openIter(currentRecipeId,currentIterId),350);}catch(e2){showToast('save failed — storage full');}}
+  } else {
+    // new cook
+    const iter={id:genId(),...iterData};
+    r.iterations.push(iter);
+    if(r.iterations.length===1)r.masterIterId=iter.id;
+    try{saveDB();showToast('cook logged ✓');goBack();setTimeout(()=>openRecipe(currentRecipeId),350);}
+    catch(e){iter.photos=[];try{saveDB();showToast('saved (photos skipped)');goBack();setTimeout(()=>openRecipe(currentRecipeId),350);}catch(e2){r.iterations.pop();showToast('save failed — storage full');}}
+  }
+}
+
+function deleteIter(){
+  if(!confirm('Delete this cook? This cannot be undone.'))return;
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return;
+  r.iterations=r.iterations.filter(i=>i.id!==currentIterId);
+  if(r.masterIterId===currentIterId){
+    r.masterIterId=r.iterations.length===1?r.iterations[0].id:null;
+  }
+  saveDB();showToast('cook deleted');
+  // go back to recipe detail
+  screenStack=screenStack.filter(s=>s!=='screen-log'&&s!=='screen-iter');
+  if(!screenStack.includes('screen-recipe'))screenStack.push('screen-recipe');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','prev'));
+  document.getElementById('screen-recipe').classList.add('active');
+  openRecipe(currentRecipeId);
+}
+
+// ── ITER DETAIL ───────────────────────────────────────────────────────────
+function openIter(recipeId,iterId){
+  currentRecipeId=recipeId; currentIterId=iterId;
+  const r=db.recipes.find(x=>x.id===recipeId);if(!r)return;
+  const iterIdx=r.iterations.findIndex(i=>i.id===iterId),iter=r.iterations[iterIdx];if(!iter)return;
+  const vNum=iterIdx+1,isMaster=r.masterIterId===iterId;
+  document.getElementById('iter-detail-title').textContent=`v${vNum}`;
+  document.getElementById('iter-best-badge').innerHTML=isMaster?'<span class="badge badge-gold">✦ master</span>':'';
+  document.getElementById('iter-best-banner').innerHTML=isMaster?'<div style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--gold);">✦ this is your master recipe</div>':'';
+  document.getElementById('iter-detail-stars').innerHTML=starsHTML(iter.rating);
+  document.getElementById('iter-detail-rating-text').textContent=iter.rating>0?`${iter.rating}.0 / 5`:'not rated';
+  document.getElementById('iter-detail-date').textContent=formatDate(iter.date);
+  const ps=document.getElementById('iter-photos-section');
+  if(iter.photos&&iter.photos.length>0){ps.style.display='block';document.getElementById('iter-photos').innerHTML=iter.photos.map(src=>`<div class="photo-scroll-item"><img src="${src}"></div>`).join('');}else{ps.style.display='none';}
+  const cs=document.getElementById('iter-changes-section');
+  if(iter.changes&&iter.changes.length>0){cs.style.display='block';document.getElementById('iter-detail-changes').innerHTML=iter.changes.map(c=>chipHTML(c)).join('');}else{cs.style.display='none';}
+  const ns=document.getElementById('iter-notes-section');
+  if(iter.notes){ns.style.display='block';document.getElementById('iter-detail-notes').textContent=iter.notes;}else{ns.style.display='none';}
+  const nx=document.getElementById('iter-next-section');
+  if(iter.nextTime){nx.style.display='block';document.getElementById('iter-detail-next').textContent=iter.nextTime;}else{nx.style.display='none';}
+  document.getElementById('iter-detail-snapshot').textContent=iter.snapshot||'(no snapshot recorded)';
+  const mw=document.getElementById('iter-master-btn-wrap');
+  mw.innerHTML=isMaster?'<div style="text-align:center;font-size:13px;color:var(--gold);">✦ this is your master recipe</div>':`<button class="master-btn" onclick="markAsMaster('${recipeId}','${iterId}')">✦ mark as master recipe</button>`;
+  showScreen('screen-iter');
+}
+function markAsMaster(recipeId,iterId){
+  const r=db.recipes.find(x=>x.id===recipeId);if(!r)return;
+  r.masterIterId=iterId;saveDB();showToast('✦ master recipe saved');
+  document.getElementById('iter-master-btn-wrap').innerHTML='<div style="text-align:center;font-size:13px;color:var(--gold);">✦ this is your master recipe</div>';
+  document.getElementById('iter-best-badge').innerHTML='<span class="badge badge-gold">✦ master</span>';
+  document.getElementById('iter-best-banner').innerHTML='<div style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--gold);">✦ this is your master recipe</div>';
+  renderMasterSection(r);renderIterList(r);
+}
+
+// ── NEW RECIPE ────────────────────────────────────────────────────────────
+function initNewRecipe(){
+  selectedEmoji='🍖';
+  buildEmojiPicker('new-emoji-picker','🍖',selectNewEmoji);
+  document.getElementById('new-name').value='';
+  document.getElementById('new-tags').value='';
+  document.getElementById('new-recipe-text').value='';
+  document.getElementById('new-notes').value='';
+  showScreen('screen-new-recipe');
+}
+function saveNewRecipe(){
+  const name=document.getElementById('new-name').value.trim();if(!name){showToast('please enter a recipe name');return;}
+  const tags=document.getElementById('new-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const recipe={id:genId(),name,emoji:selectedEmoji,tags,baseRecipe:document.getElementById('new-recipe-text').value.trim(),notes:document.getElementById('new-notes').value.trim(),masterIterId:null,createdAt:new Date().toISOString(),iterations:[]};
+  db.recipes.unshift(recipe);saveDB();
+  showToast('recipe created ✓');goBack();renderHome();
+}
+
+// ── JOURNAL ───────────────────────────────────────────────────────────────
+function renderJournal(){
+  const el=document.getElementById('journal-list'),allIters=[];
+  db.recipes.forEach(r=>r.iterations.forEach((iter,idx)=>allIters.push({...iter,recipeName:r.name,recipeEmoji:r.emoji,recipeId:r.id,vNum:idx+1,isMaster:r.masterIterId===iter.id})));
+  allIters.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!allIters.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📓</div><div class="empty-title">no cooks yet</div><div class="empty-text">Your cook history appears here once you start logging.</div></div>`;return;}
+  el.innerHTML=allIters.map(iter=>`<div class="iter-row" onclick="openRecipe('${iter.recipeId}')">
+    <div style="font-size:24px;flex-shrink:0;margin-top:2px;">${iter.recipeEmoji}</div>
+    <div class="iter-content">
+      <div class="iter-header"><span class="iter-version">${iter.recipeName} <span style="font-weight:300;color:var(--text-dim);">v${iter.vNum}</span>${iter.isMaster?' <span style="color:var(--gold);font-size:11px;">✦</span>':''}</span><span style="font-size:12px;color:var(--text-dim);">${formatDate(iter.date)}</span></div>
+      <div style="margin-bottom:4px;">${starsHTML(iter.rating)}</div>
+      ${iter.notes?`<div class="iter-note">${iter.notes.substring(0,80)}${iter.notes.length>80?'…':''}</div>`:''}
+    </div>
+  </div>`).join('');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function formatDate(iso){const d=new Date(iso);return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function formatRelDate(iso){const d=new Date(iso),now=new Date(),diff=Math.floor((now-d)/86400000);if(diff===0)return'today';if(diff===1)return'yesterday';if(diff<7)return`${diff}d ago`;if(diff<30)return`${Math.floor(diff/7)}w ago`;return formatDate(iso);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+
+// ── AUDIO RECORDING ──────────────────────────────────────────────────────
+let mediaRecorder=null,audioChunks=[],recTimerInterval=null,recSeconds=0,logAudios=[];
+let currentAudio=null,currentAudioItem=null;
+
+function toggleRecording(){
+  if(mediaRecorder&&mediaRecorder.state==='recording'){stopRecording();}
+  else{startRecording();}
+}
+
+async function startRecording(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    // pick best supported format
+    const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+    const opts=mimeType?{mimeType}:{};
+    mediaRecorder=new MediaRecorder(stream,opts);
+    audioChunks=[];
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+      const reader=new FileReader();
+      reader.onload=()=>{
+        logAudios.push({id:genId(),data:reader.result,duration:recSeconds,mimeType:blob.type,createdAt:new Date().toISOString()});
+        renderLogAudios();
+      };
+      reader.readAsDataURL(blob);
+    };
+    mediaRecorder.start(100);
+    recSeconds=0;
+    document.getElementById('rec-dot').classList.add('pulse');
+    document.getElementById('rec-btn-label').textContent='tap to stop recording';
+    document.getElementById('rec-timer').style.display='inline';
+    document.getElementById('record-btn').classList.add('recording');
+    recTimerInterval=setInterval(()=>{
+      recSeconds++;
+      document.getElementById('rec-timer').textContent=formatRecTime(recSeconds);
+    },1000);
+  }catch(err){
+    showToast('microphone access denied');
+  }
+}
+
+function stopRecording(){
+  if(!mediaRecorder)return;
+  clearInterval(recTimerInterval);
+  mediaRecorder.stop();
+  document.getElementById('rec-dot').classList.remove('pulse');
+  document.getElementById('rec-btn-label').textContent='hold to record a memo';
+  document.getElementById('rec-timer').style.display='none';
+  document.getElementById('record-btn').classList.remove('recording');
+  mediaRecorder=null;
+}
+
+function formatRecTime(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+
+function renderLogAudios(){
+  document.getElementById('audio-list').innerHTML=logAudios.map((a,i)=>audioItemHTML(a,i,'log')).join('');
+}
+
+function renderIterAudios(audios){
+  const sec=document.getElementById('iter-audio-section');
+  if(!audios||!audios.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('iter-audio-list').innerHTML=audios.map((a,i)=>audioItemHTML(a,i,'iter')).join('');
+}
+
+function audioItemHTML(a,i,ctx){
+  const bars=Array.from({length:20},(_,b)=>{
+    const h=Math.max(3,Math.round(8+Math.sin(b*0.7+i*1.3)*5+Math.random()*6));
+    return `<div class="audio-waveform-bar" id="wbar-${a.id}-${b}" style="height:${h}px;"></div>`;
+  }).join('');
+  const delBtn=ctx==='log'?`<button class="audio-del-btn" onclick="deleteLogAudio(${i})" title="delete">×</button>`:'';
+  return `<div class="audio-item" id="aitem-${a.id}">
+    <button class="audio-play-btn" id="abtn-${a.id}" onclick="toggleAudio('${a.id}','${ctx}',${i})" title="play/pause">▶</button>
+    <div class="audio-waveform">${bars}</div>
+    <span class="audio-meta" id="aprog-${a.id}">${formatRecTime(a.duration)}</span>
+    ${delBtn}
+  </div>`;
+}
+
+function toggleAudio(audioId,ctx,idx){
+  // stop any currently playing
+  if(currentAudio){
+    currentAudio.pause();currentAudio=null;
+    if(currentAudioItem){
+      document.getElementById('abtn-'+currentAudioItem)?.classList.remove('playing');
+      const prevBtn=document.getElementById('abtn-'+currentAudioItem);
+      if(prevBtn)prevBtn.textContent='▶';
+    }
+    if(currentAudioItem===audioId){currentAudioItem=null;return;}
+  }
+  const audios=ctx==='log'?logAudios:(db.recipes.find(r=>r.id===currentRecipeId)?.iterations.find(i=>i.id===currentIterId)?.audios||[]);
+  const a=audios[idx];if(!a)return;
+  const audio=new Audio(a.data);
+  currentAudio=audio;currentAudioItem=audioId;
+  const btn=document.getElementById('abtn-'+audioId);
+  const prog=document.getElementById('aprog-'+audioId);
+  if(btn){btn.textContent='⏸';btn.classList.add('playing');}
+  audio.ontimeupdate=()=>{
+    if(prog)prog.textContent=formatRecTime(Math.floor(audio.currentTime));
+    // animate bars
+    const pct=audio.currentTime/audio.duration;
+    const totalBars=20,activeBars=Math.floor(pct*totalBars);
+    for(let b=0;b<totalBars;b++){
+      const bar=document.getElementById(`wbar-${audioId}-${b}`);
+      if(bar)bar.classList.toggle('active',b<activeBars);
+    }
+  };
+  audio.onended=()=>{
+    if(btn){btn.textContent='▶';btn.classList.remove('playing');}
+    if(prog)prog.textContent=formatRecTime(a.duration);
+    for(let b=0;b<20;b++){document.getElementById(`wbar-${audioId}-${b}`)?.classList.remove('active');}
+    currentAudio=null;currentAudioItem=null;
+  };
+  audio.play().catch(()=>showToast('could not play audio'));
+}
+
+function deleteLogAudio(i){
+  if(currentAudioItem===logAudios[i]?.id&&currentAudio){currentAudio.pause();currentAudio=null;currentAudioItem=null;}
+  logAudios.splice(i,1);renderLogAudios();
+}
+
+// patch showLogCook and showEditIter to reset/load audios
+const _origShowLogCook=showLogCook;
+showLogCook=function(){
+  logAudios=[];
+  _origShowLogCook();
+  renderLogAudios();
+};
+const _origShowEditIter=showEditIter;
+showEditIter=function(){
+  const r=db.recipes.find(x=>x.id===currentRecipeId);
+  const iter=r?.iterations.find(i=>i.id===currentIterId);
+  logAudios=iter?.audios?[...iter.audios]:[];
+  _origShowEditIter();
+  renderLogAudios();
+};
+
+// patch saveLog to include audios
+const _origSaveLog=saveLog;
+saveLog=function(){
+  // inject audios into iterData by monkey-patching after the fact
+  // We override the push/update logic here
+  if(!currentRecipeId)return _origSaveLog();
+  const r=db.recipes.find(x=>x.id===currentRecipeId);if(!r)return _origSaveLog();
+  const dateVal=document.getElementById('log-date').value;
+  const iterData={
+    date:dateVal?new Date(dateVal+'T12:00:00').toISOString():new Date().toISOString(),
+    photos:[...logPhotos],audios:[...logAudios],changes:[...logChanges],rating:logRating,
+    notes:document.getElementById('log-notes').value.trim(),
+    nextTime:document.getElementById('log-next-time').value.trim(),
+    snapshot:document.getElementById('log-snapshot').value.trim()
+  };
+  if(isEditingIter){
+    const idx=r.iterations.findIndex(i=>i.id===currentIterId);
+    if(idx===-1){showToast('error: cook not found');return;}
+    r.iterations[idx]={...r.iterations[idx],...iterData};
+    try{saveDB();showToast('cook updated ✓');goBack();setTimeout(()=>openIter(currentRecipeId,currentIterId),350);}
+    catch(e){r.iterations[idx].photos=[];r.iterations[idx].audios=[];try{saveDB();showToast('saved (media skipped)');goBack();setTimeout(()=>openIter(currentRecipeId,currentIterId),350);}catch(e2){showToast('save failed — storage full');}}
+  } else {
+    const iter={id:genId(),...iterData};
+    r.iterations.push(iter);
+    if(r.iterations.length===1)r.masterIterId=iter.id;
+    try{saveDB();showToast('cook logged ✓');goBack();setTimeout(()=>openRecipe(currentRecipeId),350);}
+    catch(e){iter.photos=[];iter.audios=[];try{saveDB();showToast('saved (media skipped)');goBack();setTimeout(()=>openRecipe(currentRecipeId),350);}catch(e2){r.iterations.pop();showToast('save failed — storage full');}}
+  }
+};
+
+// patch openIter to show audios
+const _origOpenIter=openIter;
+openIter=function(recipeId,iterId){
+  _origOpenIter(recipeId,iterId);
+  const r=db.recipes.find(x=>x.id===recipeId);
+  const iter=r?.iterations.find(i=>i.id===iterId);
+  renderIterAudios(iter?.audios||[]);
+};
+
+document.querySelector('.fab').onclick=initNewRecipe;
+
+renderHome();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/evertastier/sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
