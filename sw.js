@@ -1,4 +1,4 @@
-const CACHE = 'ever-tastier-v11';
+const CACHE = 'ever-tastier-v12';
 const ASSETS = ['/evertastier/', '/evertastier/index.html', '/evertastier/manifest.json'];
 
 self.addEventListener('install', e => {
